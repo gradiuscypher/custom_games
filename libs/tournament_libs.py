@@ -27,21 +27,20 @@ class TournamentManager:
 
         return tournament_list
 
-    def start_tournament(self, name, provider_id, tournament_id, map_type, extra=""):
+    def start_tournament(self, name, provider_id, tournament_id, extra=""):
         """
         Starts a new Tournament. Will not start if an active tournament (completed==False) already exists.
         :param name: The tournament name. User-friendly value.
         :param provider_id: The Tournament API Provider ID
         :param tournament_id: The Tournament API Tournament ID
-        :param map_type: The map type: SUMMONERS_RIFT, HOWLING_ABYSS
         :param extra: Any extra data about the tournament. Can be empty.
         :return: boolean if creation succeeds or fails
         """
-        query = session.query(Tournament).filter(Tournament.completed==False).filter(Tournament.map_type==map_type)
+        query = session.query(Tournament).filter(Tournament.completed==False)
 
         if query.count() == 0:
-            new_tournament = Tournament(tournament_id=tournament_id, extra=extra, name=name, map_type=map_type,
-                                        completed=False, provider_id=provider_id)
+            new_tournament = Tournament(tournament_id=tournament_id, extra=extra, name=name, completed=False,
+                                        provider_id=provider_id)
             session.add(new_tournament)
             session.commit()
             return True
@@ -58,7 +57,6 @@ class Tournament(Base):
     name = Column(String)
     completed = Column(Boolean)
     provider_id = Column(Integer)
-    map_type = Column(String)
     participants = relationship('Participant')
     game_instances = relationship('GameInstance')
 
@@ -119,8 +117,8 @@ class Tournament(Base):
         session.commit()
 
     def __repr__(self):
-        return "<Tournament(id={} tournament_id={} extra={} name={} completed={} provider_id={} map_type={})>"\
-            .format(self.id, self.tournament_id, self.extra, self.name, self.completed, self.provider_id, self.map_type)
+        return "<Tournament(id={} tournament_id={} extra={} name={} completed={} provider_id={})>"\
+            .format(self.id, self.tournament_id, self.extra, self.name, self.completed, self.provider_id)
 
 
 class GameInstance(Base):
