@@ -2,6 +2,7 @@
 .idea/
 *.conf
 venv3/
+*.db
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
