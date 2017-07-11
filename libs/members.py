@@ -100,11 +100,41 @@ def start_validation(discord_id, discord_name):
         return False, member.validation_string
 
 
-def check_for_validation(validation_url, validation_string):
+def check_for_validation(url_location, url_discussion):
     """
-    Check the Boards forum post for validation string
+    Check the Boards forum post for validation string and validate those users
     :param validation_url:
     :param validation_string:
     :return:
     """
-    pass
+    api_url = "https://boards.na.leagueoflegends.com/api/{}/discussions/{}/comments?num_loaded={}"
+    loaded_count = 0
+    remaining = 1
+    post_data = []
+
+    try:
+        # Pull all data from validation posts and format into useful object
+        while remaining > 0:
+            result = requests.get(api_url.format(url_location, url_discussion, loaded_count)).json()
+            remaining = result['moreCount']
+            loaded_count += 20
+
+            for comment in result['comments']:
+                if len(comment['message']) <= 16:
+                    post_data.append([comment['user']['name'], comment['message']])
+    except:
+        print(traceback.format_exc())
+
+    # Find all users that aren't validated
+    unvalidated = [x for x in session.query(GdMember).filter(GdMember.validated==False).all()]
+
+    # For every message found that matches length, see if it matches any unvalidated user's message
+    for message in post_data:
+        for user in unvalidated:
+            print("Checking ", user.discord_name, " to post value ", message[1])
+            if message[1] == user.validation_string:
+                user.summoner_name = message[0]
+                user.validated = True
+                session.commit()
+                print(user.summoner_name + " has been validated")
+                break
