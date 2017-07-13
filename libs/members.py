@@ -138,3 +138,21 @@ def check_for_validation(url_location, url_discussion):
                 session.commit()
                 print(user.summoner_name + " has been validated")
                 break
+
+
+def is_user_validated(discord_id):
+    """
+    Returns a boolean of if the discord_id has been validated via the forums
+    :param discord_id:
+    :return: boolean
+    """
+    try:
+        member_query = session.query(GdMember).filter(GdMember.discord_id==discord_id)
+
+        if member_query.count() > 0:
+            member = session.query(GdMember).filter(GdMember.discord_id==discord_id).one()
+            return member.validated
+        else:
+            return False
+    except:
+        print(traceback.format_exc())
