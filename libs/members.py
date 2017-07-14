@@ -107,8 +107,8 @@ def check_for_validation(url_location, url_discussion):
     :param validation_string:
     :return:
     """
-    # api_url = "https://boards.na.leagueoflegends.com/api/{}/discussions/{}/comments?num_loaded={}"
-    api_url = "https://boards..leagueoflegends.com/api/{}/discussions/{}/comments?num_loaded={}"
+    api_url = "https://boards.na.leagueoflegends.com/api/{}/discussions/{}/comments?num_loaded={}"
+    # api_url = "https://boards.oce.leagueoflegends.com/api/{}/discussions/{}/comments?num_loaded={}"
     loaded_count = 0
     remaining = 1
     post_data = []
