@@ -107,7 +107,8 @@ def check_for_validation(url_location, url_discussion):
     :param validation_string:
     :return:
     """
-    api_url = "https://boards.na.leagueoflegends.com/api/{}/discussions/{}/comments?num_loaded={}"
+    # api_url = "https://boards.na.leagueoflegends.com/api/{}/discussions/{}/comments?num_loaded={}"
+    api_url = "https://boards..leagueoflegends.com/api/{}/discussions/{}/comments?num_loaded={}"
     loaded_count = 0
     remaining = 1
     post_data = []
@@ -131,7 +132,8 @@ def check_for_validation(url_location, url_discussion):
     # For every message found that matches length, see if it matches any unvalidated user's message
     for message in post_data:
         for user in unvalidated:
-            print("Checking ", user.discord_name, " to post value ", message[1])
+            # TODO: Remove this print, it's spammy
+            print("Checking ", user.discord_name, " to post value ", user.validation_string)
             if message[1] == user.validation_string:
                 user.summoner_name = message[0]
                 user.validated = True
