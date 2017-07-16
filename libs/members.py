@@ -32,11 +32,11 @@ class MembersManager:
             print(traceback.format_exc())
             return False
 
-    def create_member(self, summoner_name=None, discord_name=None, discord_id=None):
+    def create_member(self, summoner_name=None, discord_name=None, discord_id=None, realm=None):
         try:
             validation_string = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(8))
             new_member = GdMember(summoner_name=summoner_name, discord_name=discord_name, discord_id=discord_id,
-                                  validation_string=validation_string, validated=False)
+                                  validation_string=validation_string, validated=False, realm=realm)
             session.add(new_member)
             session.commit()
             return new_member
@@ -71,12 +71,15 @@ class GdMember(Base):
     discord_name = Column(String)
     discord_id = Column(String)
     summoner_name = Column(String)
+    realm = Column(String)
     validation_string = Column(String)
     validated = Column(Boolean)
     groups = relationship('MemberGroup', secondary=association_table, back_populates='members')
 
     def __repr__(self):
-        return "<GdMember(summoner_name={}, discord_name={})>".format(self.summoner_name, self.discord_name)
+        return "<GdMember(summoner_name={}, realm={}, discord_name={})>".format(
+            self.summoner_name, self.realm, self.discord_name
+        )
 
 
 def start_validation(discord_id, discord_name):
@@ -121,7 +124,7 @@ def check_for_validation(url_location, url_discussion):
 
             for comment in result['comments']:
                 if len(comment['message']) <= 16:
-                    post_data.append([comment['user']['name'], comment['message']])
+                    post_data.append([comment['user'], comment['message']])
     except:
         print(traceback.format_exc())
 
@@ -133,7 +136,8 @@ def check_for_validation(url_location, url_discussion):
         for user in unvalidated:
             print("Checking ", user.discord_name, " to post value ", message[1])
             if message[1] == user.validation_string:
-                user.summoner_name = message[0]
+                user.summoner_name = message[0]['name']
+                user.realm = message[0]['realm']
                 user.validated = True
                 session.commit()
                 print(user.summoner_name + " has been validated")
