@@ -111,6 +111,7 @@ def check_for_validation(url_location, url_discussion):
     :return:
     """
     api_url = "https://boards.na.leagueoflegends.com/api/{}/discussions/{}/comments?num_loaded={}"
+    # api_url = "https://boards.oce.leagueoflegends.com/api/{}/discussions/{}/comments?num_loaded={}"
     loaded_count = 0
     remaining = 1
     post_data = []
@@ -134,7 +135,8 @@ def check_for_validation(url_location, url_discussion):
     # For every message found that matches length, see if it matches any unvalidated user's message
     for message in post_data:
         for user in unvalidated:
-            print("Checking ", user.discord_name, " to post value ", message[1])
+            # TODO: Remove this print, it's spammy
+            print("Checking ", user.discord_name, " to post value ", user.validation_string)
             if message[1] == user.validation_string:
                 user.summoner_name = message[0]['name']
                 user.realm = message[0]['realm']
@@ -142,3 +144,21 @@ def check_for_validation(url_location, url_discussion):
                 session.commit()
                 print(user.summoner_name + " has been validated")
                 break
+
+
+def is_user_validated(discord_id):
+    """
+    Returns a boolean of if the discord_id has been validated via the forums
+    :param discord_id:
+    :return: boolean
+    """
+    try:
+        member_query = session.query(GdMember).filter(GdMember.discord_id==discord_id)
+
+        if member_query.count() > 0:
+            member = session.query(GdMember).filter(GdMember.discord_id==discord_id).one()
+            return member.validated
+        else:
+            return False
+    except:
+        print(traceback.format_exc())
