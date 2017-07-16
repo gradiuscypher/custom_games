@@ -103,15 +103,15 @@ def start_validation(discord_id, discord_name):
         return False, member.validation_string
 
 
-def check_for_validation(url_location, url_discussion):
+def check_for_validation(url_location, url_discussion, forum_location="na"):
     """
     Check the Boards forum post for validation string and validate those users
-    :param validation_url:
-    :param validation_string:
+    :param url_location:
+    :param url_discussion:
+    :param forum_location:
     :return:
     """
-    api_url = "https://boards.na.leagueoflegends.com/api/{}/discussions/{}/comments?num_loaded={}"
-    # api_url = "https://boards.oce.leagueoflegends.com/api/{}/discussions/{}/comments?num_loaded={}"
+    api_url = "https://boards.{}.leagueoflegends.com/api/{}/discussions/{}/comments?num_loaded={}"
     loaded_count = 0
     remaining = 1
     post_data = []
@@ -119,7 +119,7 @@ def check_for_validation(url_location, url_discussion):
     try:
         # Pull all data from validation posts and format into useful object
         while remaining > 0:
-            result = requests.get(api_url.format(url_location, url_discussion, loaded_count)).json()
+            result = requests.get(api_url.format(forum_location, url_location, url_discussion, loaded_count)).json()
             remaining = result['moreCount']
             loaded_count += 20
 
