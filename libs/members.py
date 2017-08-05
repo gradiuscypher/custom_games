@@ -135,8 +135,6 @@ def check_for_validation(url_location, url_discussion, forum_location="na"):
     # For every message found that matches length, see if it matches any unvalidated user's message
     for message in post_data:
         for user in unvalidated:
-            # TODO: Remove this print, it's spammy
-            print("Checking ", user.discord_name, " to post value ", user.validation_string)
             if message[1] == user.validation_string:
                 user.summoner_name = message[0]['name']
                 user.realm = message[0]['realm']
