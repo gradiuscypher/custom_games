@@ -8,7 +8,7 @@ config.read("config.conf")
 api_key = config.get("RiotAPI", "api_key")
 
 # Configure API URLs
-api_root = "https://global.api.riotgames.com{}?api_key=" + api_key
+api_root = "https://americas.api.riotgames.com{}?api_key=" + api_key
 
 
 def create_provider(callback_url, region="NA"):

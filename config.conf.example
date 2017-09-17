@@ -1,2 +1,5 @@
 [RiotAPI]
 api_key =
+
+[Tournament]
+provider_id =

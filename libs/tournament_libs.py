@@ -1,3 +1,4 @@
+import configparser
 from sqlalchemy import Column, Boolean, Integer, String, ForeignKey, create_engine, DateTime
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, sessionmaker
@@ -8,6 +9,11 @@ engine = create_engine('sqlite:///tournament.db')
 Base.metadata.bind = engine
 DBSession = sessionmaker(bind=engine)
 session = DBSession()
+
+# Setup Config
+config = configparser.RawConfigParser()
+config.read('config.conf')
+provider_id = config.getint("Tournament", 'provider_id')
 
 
 class TournamentManager:
@@ -27,6 +33,7 @@ class TournamentManager:
 
         return tournament_list
 
+    # TODO: Pull provider ID from config, save tournament ID after created
     def start_tournament(self, name, provider_id, tournament_id, map, extra=""):
         """
         Starts a new Tournament. Will not start if an active tournament (completed==False) already exists.
