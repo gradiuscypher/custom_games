@@ -84,11 +84,17 @@ class Tournament(Base):
         :param map_name:
         :return:
         """
-        now = datetime.now()
-        new_game = GameInstance(tournament_id=self.id, creator_discord_id=creator_discord_id, map_name=map_name,
-                                create_date=now)
-        session.add(new_game)
-        session.commit()
+        query = session.query(GameInstance).filter(GameInstance.finish_date==None, GameInstance.map_name==map_name)
+
+        if query.count() == 0:
+            now = datetime.now()
+            new_game = GameInstance(tournament_id=self.id, creator_discord_id=creator_discord_id, map_name=map_name,
+                                    create_date=now)
+            session.add(new_game)
+            session.commit()
+            return True
+        else:
+            return False
 
     def get_active_games(self):
         """
@@ -96,7 +102,7 @@ class Tournament(Base):
         :return: list of GameInstance
         """
         game_list = []
-        query = session.query(GameInstance).filter(GameInstance.finish_date is not None)
+        query = session.query(GameInstance).filter(GameInstance.finish_date==None)
 
         for result in query:
             game_list.append(result)
@@ -104,12 +110,6 @@ class Tournament(Base):
         return game_list
 
     def join_game(self):
-        pass
-
-    def start_game(self):
-        pass
-
-    def finish_game(self):
         pass
 
     def join_season(self, discord_id):
@@ -132,6 +132,29 @@ class GameInstance(Base):
     tournament_id = Column(Integer, ForeignKey('tournaments.id'))
     map_name = Column(String)
     eog_json = Column(String)
+
+    def __repr__(self):
+        return f'<GameInstance(id={self.id}, create_date={self.create_date}, start_date={self.start_date}, ' \
+               f'finish_date={self.finish_date}, creator_discord_id={self.creator_discord_id}, ' \
+               f'tournament_id={self.tournament_id}, map_name={self.map_name}, eog_json={self.eog_json}'
+
+    def finish_game(self):
+        """
+        Sets a game into finished mode
+        :return:
+        """
+        self.finish_date = datetime.now()
+        session.commit()
+        return True
+
+    def start_game(self):
+        """
+        Sets a game into start mode
+        :return:
+        """
+        self.start_date = datetime.now()
+        session.commit()
+        return True
 
 
 class Participant(Base):
