@@ -1,4 +1,5 @@
 import configparser
+from libs import riot_tournament_api
 from sqlalchemy import Column, Boolean, Integer, String, ForeignKey, create_engine, DateTime
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, sessionmaker
@@ -14,6 +15,7 @@ session = DBSession()
 config = configparser.RawConfigParser()
 config.read('config.conf')
 provider_id = config.getint("Tournament", 'provider_id')
+developer = config.getboolean("Tournament", 'developer')
 
 
 class TournamentManager:
@@ -33,23 +35,26 @@ class TournamentManager:
 
         return tournament_list
 
-    # TODO: Pull provider ID from config, save tournament ID after created
-    def start_tournament(self, name, provider_id, tournament_id, map, extra=""):
+    def start_tournament(self, name, extra=""):
         """
         Starts a new Tournament. Will not start if an active tournament (completed==False) already exists.
         :param name: The tournament name. User-friendly value.
-        :param provider_id: The Tournament API Provider ID
-        :param tournament_id: The Tournament API Tournament ID
         :param extra: Any extra data about the tournament. Can be empty.
         :return: boolean if creation succeeds or fails
         """
-        query = session.query(Tournament).filter(Tournament.completed==False, Tournament.map==map)
+        query = session.query(Tournament).filter(Tournament.completed==False)
 
         if query.count() == 0:
-            new_tournament = Tournament(tournament_id=tournament_id, extra=extra, name=name, completed=False,
-                                        provider_id=provider_id, map=map)
+            new_tournament = Tournament(extra=extra, name=name, completed=False, provider_id=provider_id)
             session.add(new_tournament)
+
+            if developer:
+                new_tournament.tournament_id = riot_tournament_api.stub_create_tournament(name, provider_id)
+            else:
+                new_tournament.tournament_id = riot_tournament_api.create_tournament(name, provider_id)
+
             session.commit()
+
             return True
         else:
             print("There is already an active tournament.")
@@ -65,7 +70,6 @@ class Tournament(Base):
     name = Column(String)
     completed = Column(Boolean)
     provider_id = Column(Integer)
-    participants = relationship('Participant')
     game_instances = relationship('GameInstance')
 
     def complete_tournament(self):
@@ -91,13 +95,24 @@ class Tournament(Base):
         :param map_name:
         :return:
         """
+        # :param map_type: The map type of the game. (Legal values: SUMMONERS_RIFT, TWISTED_TREELINE, HOWLING_ABYSS)
+        game_type_list = ["SUMMONERS_RIFT", "HOWLING_ABYSS"]
+
         query = session.query(GameInstance).filter(GameInstance.finish_date==None, GameInstance.map_name==map_name)
 
-        if query.count() == 0:
+        if query.count() == 0 and map_name in game_type_list:
             now = datetime.now()
             new_game = GameInstance(tournament_id=self.id, creator_discord_id=creator_discord_id, map_name=map_name,
                                     create_date=now)
             session.add(new_game)
+
+            if developer:
+                new_game_id = riot_tournament_api.stub_create_tournament_code(self.tournament_id, map_type=map_name)
+                new_game.tournament_code = new_game_id.json()[0]
+            else:
+                new_game_id = riot_tournament_api.create_tournament_code(self.tournament_id, map_type=map_name)
+                new_game.tournament_code = new_game_id.json()[0]
+
             session.commit()
             return True
         else:
@@ -136,14 +151,17 @@ class GameInstance(Base):
     start_date = Column(DateTime)
     finish_date = Column(DateTime)
     creator_discord_id = Column(String)
+    tournament_code = Column(String)
     tournament_id = Column(Integer, ForeignKey('tournaments.id'))
+    participants = relationship('Participant')
     map_name = Column(String)
     eog_json = Column(String)
 
     def __repr__(self):
         return f'<GameInstance(id={self.id}, create_date={self.create_date}, start_date={self.start_date}, ' \
                f'finish_date={self.finish_date}, creator_discord_id={self.creator_discord_id}, ' \
-               f'tournament_id={self.tournament_id}, map_name={self.map_name}, eog_json={self.eog_json}'
+               f'tournament_id={self.tournament_id}, map_name={self.map_name}, eog_json={self.eog_json}, ' \
+               f'tournament_code={self.tournament_code}'
 
     def finish_game(self):
         """
@@ -168,7 +186,7 @@ class Participant(Base):
     __tablename__ = "participants"
     id = Column(Integer, primary_key=True)
     discord_id = Column(String)
-    tournament_id = Column(Integer, ForeignKey('tournaments.id'))
+    gameinstance_id = Column(Integer, ForeignKey('gameinstances.id'))
 
     def __repr__(self):
         return "<Participant(id={} discord_id={} tournament_id={})>"\
