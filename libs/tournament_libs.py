@@ -66,7 +66,6 @@ class Tournament(Base):
     id = Column(Integer, primary_key=True)
     tournament_id = Column(String)
     extra = Column(String)
-    map = Column(String)
     name = Column(String)
     completed = Column(Boolean)
     provider_id = Column(Integer)
@@ -79,6 +78,7 @@ class Tournament(Base):
         """
         self.completed = True
         session.commit()
+        return True
 
     def clean_stale_games(self):
         """
