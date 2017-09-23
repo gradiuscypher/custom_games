@@ -1,5 +1,5 @@
 import configparser
-from libs import riot_tournament_api
+from lol_customs import riot_tournament_api
 from sqlalchemy import Column, Boolean, Integer, String, ForeignKey, create_engine, DateTime
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, sessionmaker
