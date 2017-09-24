@@ -2,14 +2,15 @@ import configparser
 from lol_customs import riot_tournament_api
 from sqlalchemy import Column, Boolean, Integer, String, ForeignKey, create_engine, DateTime
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import relationship, sessionmaker
+from sqlalchemy.orm import relationship, sessionmaker, scoped_session
 from datetime import datetime
 
 Base = declarative_base()
 engine = create_engine('sqlite:///tournament.db')
 Base.metadata.bind = engine
-DBSession = sessionmaker(bind=engine)
-session = DBSession()
+session_factory = sessionmaker(bind=engine)
+Session = scoped_session(session_factory)
+session = Session()
 
 # Setup Config
 config = configparser.RawConfigParser()
@@ -54,6 +55,7 @@ class TournamentManager:
                 new_tournament.tournament_id = riot_tournament_api.create_tournament(name, provider_id)
 
             session.commit()
+            Session.remove()
 
             return True
         else:
@@ -73,11 +75,15 @@ class Tournament(Base):
 
     def complete_tournament(self):
         """
-        Marks the Tournament as complete.
+        Marks the Tournament as complete and closes all currently active games
         :return:
         """
+        for game in self.get_active_games():
+            game.finish_game()
+
         self.completed = True
         session.commit()
+        Session.remove()
         return True
 
     def clean_stale_games(self):
@@ -114,6 +120,7 @@ class Tournament(Base):
                 new_game.tournament_code = new_game_id.json()[0]
 
             session.commit()
+            Session.remove()
             return True
         else:
             return False
@@ -138,6 +145,7 @@ class Tournament(Base):
         new_participant = Participant(discord_id=discord_id, tournament_id=self.id)
         session.add(new_participant)
         session.commit()
+        Session.remove()
 
     def __repr__(self):
         return "<Tournament(id={}, tournament_id={}, extra={}, name={}, completed={}, provider_id={})>"\
@@ -170,6 +178,7 @@ class GameInstance(Base):
         """
         self.finish_date = datetime.now()
         session.commit()
+        Session.remove()
         return True
 
     def start_game(self):
@@ -179,6 +188,7 @@ class GameInstance(Base):
         """
         self.start_date = datetime.now()
         session.commit()
+        Session.remove()
         return True
 
 
