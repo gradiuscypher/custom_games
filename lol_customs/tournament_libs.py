@@ -140,8 +140,8 @@ class Tournament(Base):
         session.commit()
 
     def __repr__(self):
-        return "<Tournament(id={}, tournament_id={}, extra={}, name={}, completed={}, map={}, provider_id={})>"\
-            .format(self.id, self.tournament_id, self.extra, self.name, self.completed, self.map, self.provider_id)
+        return "<Tournament(id={}, tournament_id={}, extra={}, name={}, completed={}, provider_id={})>"\
+            .format(self.id, self.tournament_id, self.extra, self.name, self.completed, self.provider_id)
 
 
 class GameInstance(Base):
