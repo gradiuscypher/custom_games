@@ -86,9 +86,11 @@ class Tournament(Base):
         Session.remove()
         return True
 
-    def clean_stale_games(self):
+    def clean_stale_games(self, expire_hours=12):
+        # TODO: Implement
         """
         Cleans up games that are starting but don't have enough players. Compares create_date vs a timeout period.
+        :param expire_hours: number of hours to consider a game invite expired
         :return:
         """
         pass
@@ -138,15 +140,6 @@ class Tournament(Base):
 
         return game_list
 
-    def join_game(self):
-        pass
-
-    def join_season(self, discord_id):
-        new_participant = Participant(discord_id=discord_id, tournament_id=self.id)
-        session.add(new_participant)
-        session.commit()
-        Session.remove()
-
     def __repr__(self):
         return "<Tournament(id={}, tournament_id={}, extra={}, name={}, completed={}, provider_id={})>"\
             .format(self.id, self.tournament_id, self.extra, self.name, self.completed, self.provider_id)
@@ -170,6 +163,29 @@ class GameInstance(Base):
                f'finish_date={self.finish_date}, creator_discord_id={self.creator_discord_id}, ' \
                f'tournament_id={self.tournament_id}, map_name={self.map_name}, eog_json={self.eog_json}, ' \
                f'tournament_code={self.tournament_code}'
+
+    def get_lobby_status(self):
+        """
+        Get the JSON events of the game Lobby
+        :return: a dict with the following information :
+        {
+            game_started: boolean
+        }
+        """
+        if developer:
+            lobby_events = riot_tournament_api.stub_get_lobby_events(self.tournament_code)
+            for event in lobby_events:
+                if event['eventType'] == 'GameAllocationStartedEvent':
+                    self.start_game()
+        else:
+            lobby_events = riot_tournament_api.get_lobby_events(self.tournament_code)
+            for event in lobby_events:
+                if event['eventType'] == 'GameAllocationStartedEvent':
+                    self.start_game()
+
+    def check_game_status(self):
+        # TODO: Implement
+        pass
 
     def finish_game(self):
         """

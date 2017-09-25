@@ -78,10 +78,31 @@ def get_lobby_events(tournament_code):
     :param tournament_code: the tournament code
     :return:
     """
-    request_url = "/lol/tournament-stub/v3/lobby-events/by-code/{}".format(tournament_code)
+    request_url = "/lol/tournament/v3/lobby-events/by-code/{}".format(tournament_code)
     full_url = api_root.format(request_url)
     result = requests.get(full_url)
     return result.json()
+
+
+def get_match(match_id, tournament_code):
+    # TODO: Implement
+    """
+    Return a match DTO from a match ID + tournament code
+    :param match_id:
+    :param tournament_code:
+    :return:
+    """
+    request_url = f'/lol/match/v3/matches/{match_id}/by-tournament-code/{tournament_code}'
+
+
+def get_match_id_list(tournament_code):
+    # TODO: Implement
+    """
+    Takes a tournament code and returns a list of match IDs
+    :param tournament_code:
+    :return:
+    """
+    request_url = f'/lol/match/v3/matches/by-tournament-code/{tournament_code}/ids'
 
 
 def get_tournament_code_dto():
