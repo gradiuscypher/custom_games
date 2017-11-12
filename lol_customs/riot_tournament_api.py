@@ -92,7 +92,7 @@ def get_match(match_id, tournament_code):
     :param tournament_code:
     :return:
     """
-    request_url = f'/lol/match/v3/matches/{match_id}/by-tournament-code/{tournament_code}'
+    request_url = '/lol/match/v3/matches/{}/by-tournament-code/{}'.format(match_id, tournament_code)
 
 
 def get_match_id_list(tournament_code):
@@ -102,7 +102,7 @@ def get_match_id_list(tournament_code):
     :param tournament_code:
     :return:
     """
-    request_url = f'/lol/match/v3/matches/by-tournament-code/{tournament_code}/ids'
+    request_url = '/lol/match/v3/matches/by-tournament-code/{}/ids'.format(tournament_code)
 
 
 def get_tournament_code_dto():

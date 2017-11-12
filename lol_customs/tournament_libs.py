@@ -159,10 +159,10 @@ class GameInstance(Base):
     eog_json = Column(String)
 
     def __repr__(self):
-        return f'<GameInstance(id={self.id}, create_date={self.create_date}, start_date={self.start_date}, ' \
-               f'finish_date={self.finish_date}, creator_discord_id={self.creator_discord_id}, ' \
-               f'tournament_id={self.tournament_id}, map_name={self.map_name}, eog_json={self.eog_json}, ' \
-               f'tournament_code={self.tournament_code}'
+        return '<GameInstance(id={}, create_date={}, start_date={}, finish_date={}, creator_discord_id={}, ' \
+               'tournament_id={}, map_name={}, eog_json={}, tournament_code={}'\
+            .format(self.id, self.create_date, self.start_date, self.finish_date, self.creator_discord_id,
+                    self.tournament_id, self.map_name, self.eog_json, self.tournament_code)
 
     def get_lobby_status(self):
         """
