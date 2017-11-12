@@ -86,21 +86,13 @@ class Tournament(Base):
         Session.remove()
         return True
 
-    def clean_stale_games(self, expire_hours=12):
-        # TODO: Implement
-        """
-        Cleans up games that are starting but don't have enough players. Compares create_date vs a timeout period.
-        :param expire_hours: number of hours to consider a game invite expired
-        :return:
-        """
-        pass
-
-    def create_game(self, creator_discord_id, map_name):
+    def create_game(self, creator_discord_id, map_name, team_size=5):
         """
         When a user requests a new game is created. Creates an GameInstance. Will only start if map type isn't
         already starting
         :param creator_discord_id:
         :param map_name:
+        :param team_size: The amount of players on each team
         :return:
         """
         # :param map_type: The map type of the game. (Legal values: SUMMONERS_RIFT, TWISTED_TREELINE, HOWLING_ABYSS)
@@ -118,7 +110,7 @@ class Tournament(Base):
                 new_game_id = riot_tournament_api.stub_create_tournament_code(self.tournament_id, map_type=map_name)
                 new_game.tournament_code = new_game_id.json()[0]
             else:
-                new_game_id = riot_tournament_api.create_tournament_code(self.tournament_id, map_type=map_name)
+                new_game_id = riot_tournament_api.create_tournament_code(self.tournament_id, map_type=map_name, team_size=team_size)
                 new_game.tournament_code = new_game_id.json()[0]
 
             session.commit()
@@ -140,8 +132,21 @@ class Tournament(Base):
 
         return game_list
 
+    def get_complete_games(self):
+        """
+        Return a list of completed Games
+        :return: list of GameInstance
+        """
+        game_list = []
+        query = session.query(GameInstance).filter(GameInstance.finish_date!=None)
+
+        for result in query:
+            game_list.append(result)
+
+        return game_list
+
     def __repr__(self):
-        return "<Tournament(id={}, tournament_id={}, extra={}, name={}, completed={}, provider_id={})>"\
+        return "<Tournament(id={}, tournament_id={}, extra={}, name={}, completed={}, provider_id={})>" \
             .format(self.id, self.tournament_id, self.extra, self.name, self.completed, self.provider_id)
 
 
@@ -184,8 +189,12 @@ class GameInstance(Base):
                     self.start_game()
 
     def check_game_status(self):
-        # TODO: Implement
-        pass
+        match_id_list = riot_tournament_api.get_match_id_list(self.tournament_code)
+
+        if len(match_id_list) > 0:
+            # TODO: if game isn't complete, set game as finished
+            # TODO: if eog_json is empty, collect eog_json with riot_tournament_libs.get_match
+            print(match_id_list)
 
     def finish_game(self):
         """

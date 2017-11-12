@@ -9,6 +9,7 @@ api_key = config.get("RiotAPI", "api_key")
 
 # Configure API URLs
 api_root = "https://americas.api.riotgames.com{}?api_key=" + api_key
+match_api_root = "https://na1.api.riotgames.com{}?api_key=" + api_key
 
 
 def create_provider(callback_url, region="NA"):
@@ -85,7 +86,6 @@ def get_lobby_events(tournament_code):
 
 
 def get_match(match_id, tournament_code):
-    # TODO: Implement
     """
     Return a match DTO from a match ID + tournament code
     :param match_id:
@@ -93,19 +93,29 @@ def get_match(match_id, tournament_code):
     :return:
     """
     request_url = '/lol/match/v3/matches/{}/by-tournament-code/{}'.format(match_id, tournament_code)
+    full_url = match_api_root.format(request_url)
+    result = requests.get(full_url)
+
+    if result.status_code != 200:
+        return None
+    else:
+        return result.json()
 
 
 def get_match_id_list(tournament_code):
-    # TODO: Implement
     """
     Takes a tournament code and returns a list of match IDs
     :param tournament_code:
     :return:
     """
     request_url = '/lol/match/v3/matches/by-tournament-code/{}/ids'.format(tournament_code)
-    full_url = api_root.format(request_url)
+    full_url = match_api_root.format(request_url)
     result = requests.get(full_url)
-    return result.json()
+
+    if result.status_code != 200:
+        return []
+    else:
+        return result.json()
 
 
 def get_tournament_code_dto():
