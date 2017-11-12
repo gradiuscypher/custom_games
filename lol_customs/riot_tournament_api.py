@@ -66,7 +66,7 @@ def create_tournament_code(tournament_id, map_type="SUMMONERS_RIFT", metadata=""
         "teamSize": team_size
     }
 
-    request_url = "/lol/tournament-stub/v3/codes"
+    request_url = "/lol/tournament/v3/codes"
     full_url = api_root.format(request_url) + "&tournamentId={}".format(tournament_id)
     result = requests.post(full_url, json=request_body)
     return result
@@ -103,6 +103,9 @@ def get_match_id_list(tournament_code):
     :return:
     """
     request_url = '/lol/match/v3/matches/by-tournament-code/{}/ids'.format(tournament_code)
+    full_url = api_root.format(request_url)
+    result = requests.get(full_url)
+    return result.json()
 
 
 def get_tournament_code_dto():
