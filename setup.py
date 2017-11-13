@@ -4,7 +4,7 @@ from setuptools import setup
 
 setup(
     name="custom_games",
-    version='0.2.0',
+    version='0.2.7',
     author='gradiuscypher',
     author_email='gradiuscypher@gmail.com',
     license='MIT',

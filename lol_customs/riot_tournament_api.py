@@ -118,6 +118,22 @@ def get_match_id_list(tournament_code):
         return result.json()
 
 
+def get_summoner_name(summoner_id):
+    """
+    Takes a summoner ID and returns a summoner name str
+    :param summoner_id:
+    :return: str: summoner name
+    """
+    request_url = '/lol/summoner/v3/summoners/{}'.format(summoner_id)
+    full_url = match_api_root.format(request_url)
+    result = requests.get(full_url)
+
+    if result.status_code != 200:
+        return 'NAME_LOOKUP_FAILED'
+    else:
+        return result.json()['name']
+
+
 def get_tournament_code_dto():
     pass
 

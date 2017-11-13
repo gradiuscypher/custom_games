@@ -57,7 +57,6 @@ class TournamentManager:
                 new_tournament.tournament_id = riot_tournament_api.create_tournament(name, provider_id)
 
             session.commit()
-            Session.remove()
 
             return True
         else:
@@ -85,7 +84,6 @@ class Tournament(Base):
 
         self.completed = True
         session.commit()
-        Session.remove()
         return True
 
     def create_game(self, creator_discord_id, map_name, team_size=5):
@@ -100,7 +98,8 @@ class Tournament(Base):
         # :param map_type: The map type of the game. (Legal values: SUMMONERS_RIFT, TWISTED_TREELINE, HOWLING_ABYSS)
         game_type_list = ["SUMMONERS_RIFT", "HOWLING_ABYSS"]
 
-        query = session.query(GameInstance).filter(GameInstance.finish_date==None, GameInstance.map_name==map_name)
+        query = session.query(GameInstance).filter(GameInstance.start_date==None, GameInstance.finish_date==None,
+                                                   GameInstance.map_name==map_name)
 
         if query.count() == 0 and map_name in game_type_list:
             now = datetime.now()
@@ -116,10 +115,22 @@ class Tournament(Base):
                 new_game.tournament_code = new_game_id.json()[0]
 
             session.commit()
-            Session.remove()
             return True
         else:
             return False
+
+    def get_open_games(self):
+        """
+        Return a list of open Games
+        :return: list of GameInstance
+        """
+        game_list = []
+        query = session.query(GameInstance).filter(GameInstance.start_date==None)
+
+        for result in query:
+            game_list.append(result)
+
+        return game_list
 
     def get_active_games(self):
         """
@@ -127,7 +138,7 @@ class Tournament(Base):
         :return: list of GameInstance
         """
         game_list = []
-        query = session.query(GameInstance).filter(GameInstance.finish_date==None)
+        query = session.query(GameInstance).filter(GameInstance.finish_date==None, GameInstance.start_date!=None)
 
         for result in query:
             game_list.append(result)
@@ -171,6 +182,25 @@ class GameInstance(Base):
             .format(self.id, self.create_date, self.start_date, self.finish_date, self.creator_discord_id,
                     self.tournament_id, self.map_name, self.eog_json, self.tournament_code)
 
+    def get_players_in_lobby(self):
+        player_actions = {}
+        player_list = []
+
+        lobby_events = riot_tournament_api.get_lobby_events(self.tournament_code)
+
+        for event in lobby_events['eventList']:
+            if event['eventType'] == "PracticeGameCreatedEvent" or event['eventType'] == "PlayerJoinedGameEvent" or event['eventType'] == "PlayerQuitGameEvent":
+                if event['summonerId'] not in player_actions.keys():
+                    player_actions[event['summonerId']] = [event['timestamp'], event['eventType']]
+                else:
+                    if player_actions[event['summonerId']][0] < event['timestamp']:
+                        player_actions[event['summonerId']] = [event['timestamp'], event['eventType']]
+
+        for key in player_actions.keys():
+            if player_actions[key][1] == "PlayerJoinedGameEvent" or player_actions[key][1] == "PracticeGameCreatedEvent":
+                player_list.append(riot_tournament_api.get_summoner_name(key))
+        return player_list
+
     def get_lobby_status(self):
         """
         Get the JSON events of the game Lobby
@@ -206,6 +236,8 @@ class GameInstance(Base):
 
                 # Update the session
                 session.commit()
+
+                return True
 
             except:
                 print("Failed to update the game status")
