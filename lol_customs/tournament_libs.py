@@ -1,4 +1,6 @@
 import configparser
+import traceback
+import json
 from lol_customs import riot_tournament_api
 from sqlalchemy import Column, Boolean, Integer, String, ForeignKey, create_engine, DateTime
 from sqlalchemy.ext.declarative import declarative_base
@@ -192,9 +194,22 @@ class GameInstance(Base):
         match_id_list = riot_tournament_api.get_match_id_list(self.tournament_code)
 
         if len(match_id_list) > 0:
-            # TODO: if game isn't complete, set game as finished
-            # TODO: if eog_json is empty, collect eog_json with riot_tournament_libs.get_match
-            print(match_id_list)
+            try:
+                # Set the game as finished
+                self.finish_game()
+
+                # Update the eog_json
+                json_results = riot_tournament_api.get_match(match_id_list[0], self.tournament_code)
+
+                if json_results:
+                    self.eog_json = json.dumps(json_results)
+
+                # Update the session
+                session.commit()
+
+            except:
+                print("Failed to update the game status")
+                print(traceback.format_exc())
 
     def finish_game(self):
         """
@@ -203,7 +218,6 @@ class GameInstance(Base):
         """
         self.finish_date = datetime.now()
         session.commit()
-        Session.remove()
         return True
 
     def start_game(self):
@@ -213,7 +227,6 @@ class GameInstance(Base):
         """
         self.start_date = datetime.now()
         session.commit()
-        Session.remove()
         return True
 
 
