@@ -182,6 +182,32 @@ class GameInstance(Base):
             .format(self.id, self.create_date, self.start_date, self.finish_date, self.creator_discord_id,
                     self.tournament_id, self.map_name, self.eog_json, self.tournament_code)
 
+    def is_game_started(self):
+        """
+        Uses the Game lobby status to determine if the game has started
+        :return: boolean - did champ select start
+        """
+        lobby_events = riot_tournament_api.get_lobby_events(self.tournament_code)
+        for event in lobby_events['eventList']:
+            if event['eventType'] == 'ChampSelectStartedEvent':
+                self.start_game()
+                return True
+        return False
+
+    def is_game_finished(self):
+        """
+        Checks to see if a game ID exists for the Tournament Code, if it does, that means the game is finished.
+        :return: boolean
+        """
+        game_ids = riot_tournament_api.get_match_id_list(self.tournament_code)
+
+        if len(game_ids) > 0:
+            eog_json = riot_tournament_api.get_match(game_ids[0], self.tournament_code)
+            self.finish_game(eog_json)
+            return True
+        else:
+            return False
+
     def get_players_in_lobby(self):
         player_actions = {}
         player_list = []
@@ -243,12 +269,13 @@ class GameInstance(Base):
                 print("Failed to update the game status")
                 print(traceback.format_exc())
 
-    def finish_game(self):
+    def finish_game(self, eog_json):
         """
         Sets a game into finished mode
         :return:
         """
         self.finish_date = datetime.now()
+        self.eog_json = eog_json
         session.commit()
         return True
 
