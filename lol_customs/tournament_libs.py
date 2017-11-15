@@ -145,6 +145,20 @@ class Tournament(Base):
 
         return game_list
 
+    def check_for_finished_games(self):
+        """
+        Iterates through games that are started but not finished to check if any are ready to collect results
+        :return: list of finished game objects
+        """
+        finished_games = []
+        active_games = self.get_active_games()
+
+        for game in active_games:
+            if game.is_game_finished():
+                finished_games.append(game)
+
+        return finished_games
+
     def get_complete_games(self):
         """
         Return a list of completed Games
@@ -246,36 +260,13 @@ class GameInstance(Base):
                 if event['eventType'] == 'GameAllocationStartedEvent':
                     self.start_game()
 
-    def check_game_status(self):
-        match_id_list = riot_tournament_api.get_match_id_list(self.tournament_code)
-
-        if len(match_id_list) > 0:
-            try:
-                # Set the game as finished
-                self.finish_game()
-
-                # Update the eog_json
-                json_results = riot_tournament_api.get_match(match_id_list[0], self.tournament_code)
-
-                if json_results:
-                    self.eog_json = json.dumps(json_results)
-
-                # Update the session
-                session.commit()
-
-                return True
-
-            except:
-                print("Failed to update the game status")
-                print(traceback.format_exc())
-
     def finish_game(self, eog_json):
         """
         Sets a game into finished mode
         :return:
         """
         self.finish_date = datetime.now()
-        self.eog_json = eog_json
+        self.eog_json = json.dumps(eog_json)
         session.commit()
         return True
 
@@ -287,6 +278,22 @@ class GameInstance(Base):
         self.start_date = datetime.now()
         session.commit()
         return True
+
+    def parse_game_results(self):
+        # TODO: complete the parsing and return a results summary dict
+        game_json = json.loads(self.eog_json)
+        player_identities = {}
+        team_one_players = ''
+        team_two_players = ''
+
+        for player in game_json['participantIdentities']:
+            player_identities[player['participantId']] = player['player']['summonerName']
+
+        for player in game_json['participants']:
+            if player['teamId'] == 100:
+                team_one_players += player_identities[player['participantId']] + "\n"
+            if player['teamId'] == 200:
+                team_two_players += player_identities[player['participantId']] + "\n"
 
 
 class Participant(Base):
